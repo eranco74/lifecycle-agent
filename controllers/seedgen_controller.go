@@ -35,8 +35,6 @@ import (
 	commonUtils "github.com/openshift-kni/lifecycle-agent/utils"
 	lcautils "github.com/openshift-kni/lifecycle-agent/utils"
 
-	"github.com/go-logr/logr"
-	"github.com/samber/lo"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -51,13 +49,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	seedgenv1alpha1 "github.com/openshift-kni/lifecycle-agent/api/seedgenerator/v1alpha1"
-	lcav1alpha1 "github.com/openshift-kni/lifecycle-agent/api/v1alpha1"
-	mcv1 "github.com/openshift/api/machineconfiguration/v1"
+	"github.com/go-logr/logr"
+	"github.com/samber/lo"
+
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	seedgenv1alpha1 "github.com/openshift-kni/lifecycle-agent/api/seedgenerator/v1alpha1"
+	lcav1alpha1 "github.com/openshift-kni/lifecycle-agent/api/v1alpha1"
+	mcv1 "github.com/openshift/api/machineconfiguration/v1"
 )
 
 // SeedGeneratorReconciler reconciles a SeedGenerator object
@@ -550,11 +552,11 @@ func (r *SeedGeneratorReconciler) validateSystem(ctx context.Context) (msg strin
 	}
 
 	// TODO: Remove this dnsmasq check once ACM includes it? Or should we just keep it regardless, for dev systems not installed via ACM?
-	dnsmasqConfigScript := "/usr/local/bin/dnsmasq_config.sh"
-	if _, err := os.Stat(common.PathOutsideChroot(dnsmasqConfigScript)); os.IsNotExist(err) {
-		msg = "Rejected due to system missing dnsmasq config required for IBU"
-		return
-	}
+	//dnsmasqConfigScript := "/usr/local/bin/dnsmasq_config.sh"
+	//if _, err := os.Stat(common.PathOutsideChroot(dnsmasqConfigScript)); os.IsNotExist(err) {
+	//	msg = "Rejected due to system missing dnsmasq config required for IBU"
+	//	return
+	//}
 
 	// Ensure cluster's pull-secret is not sanitized
 	dockerConfigJSON, _ := os.ReadFile(filepath.Join(common.Host, common.ImageRegistryAuthFile))

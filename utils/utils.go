@@ -13,7 +13,6 @@ import (
 	"regexp"
 	"text/template"
 
-	"github.com/samber/lo"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -26,6 +25,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	k8syaml "sigs.k8s.io/yaml"
+
+	"github.com/samber/lo"
 
 	"github.com/go-logr/logr"
 	lcav1alpha1 "github.com/openshift-kni/lifecycle-agent/api/v1alpha1"
@@ -103,10 +104,18 @@ func GetSNOMasterNode(ctx context.Context, client runtimeclient.Client) (*corev1
 	if err != nil {
 		return nil, fmt.Errorf("failed list nodes: %w", err)
 	}
-	if len(nodesList.Items) != 1 {
-		return nil, fmt.Errorf("we should have one master node in sno cluster, current number is %d", len(nodesList.Items))
+	//if len(nodesList.Items) != 1 {
+	//	return nil, fmt.Errorf("we should have one master node in sno cluster, current number is %d", len(nodesList.Items))
+	//}
+	// TODO: write this better, currently it assumes running with net=host
+	nodeName := os.Getenv("HOSTNAME")
+
+	for i, node := range nodesList.Items {
+		if node.Name == nodeName {
+			return &nodesList.Items[i], nil
+		}
 	}
-	return &nodesList.Items[0], nil
+	return nil, fmt.Errorf("failed to find master node")
 }
 
 func ReadYamlOrJSONFile(filePath string, into any) error {
