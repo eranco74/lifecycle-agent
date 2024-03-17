@@ -24,8 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-logr/logr"
-	cp "github.com/otiai10/copy"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,6 +31,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/go-logr/logr"
+	cp "github.com/otiai10/copy"
 
 	"github.com/openshift-kni/lifecycle-agent/api/v1alpha1"
 )
@@ -102,7 +103,7 @@ func CopyOutsideChroot(src, dest string) error {
 }
 
 func GetStaterootPath(osname string) string {
-	return fmt.Sprintf("%s/ostree/deploy/%s", OstreeDeployPathPrefix, osname)
+	return filepath.Join(OstreeDeployPathPrefix, "ostree", "deploy", osname)
 }
 
 // GetStaterootOptOpenshift returns the path to the `/opt/openshift` directory

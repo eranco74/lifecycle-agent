@@ -134,6 +134,45 @@ func (o *ops) RestoreOriginalSeedCrypto(recertContainerImage, authFile string) e
 	return nil
 }
 
+// CreateEtcdSnapshot Create etcd snapshot from etcd DDB.
+// This cleanup the members from the etcd database,
+// which is required incase we use etcd DB from multi node cluster.
+func (o *ops) CreateEtcdSnapshot(authFile, name string) error {
+	// Get etcdImage available for the current release, this is needed by recert to
+	// run an unauthenticated etcd server for running successfully.
+	o.log.Infof("Getting image from %s static pod file", common.EtcdStaticPodFile)
+	etcdImage, err := utils.ReadImageFromStaticPodDefinition(common.EtcdStaticPodFile, common.EtcdStaticPodContainer)
+	if err != nil {
+		return fmt.Errorf("failed to get image from %s static pod file: %w", common.EtcdStaticPodFile, err)
+	}
+
+	o.log.Info("Create etcd snapshot")
+
+	command := "podman"
+	args := append(podmanRecertArgs,
+		"--name", name,
+		"--entrypoint", "etcdctl",
+		"-v", "/var/lib/etcd:/store",
+		etcdImage,
+		"snapshot", "restore", "store/member/snap/db", "--name", "editor", "--initial-cluster", "editor=https://localhost:2380",
+		"--initial-cluster-token", "openshift-etcd-121618ba-8a84-40ed-a79c-5fdc2187852b", "--initial-advertise-peer-urls", "https://localhost:2380",
+		"--data-dir", "store/restore-121618ba-8a84-40ed-a79c-5fdc2187852b", "--bump-revision", "1000000000", "--mark-compacted", "--skip-hash-check=false")
+
+	// Run the command and return an error if it occurs
+	if _, err := o.RunInHostNamespace(command, args...); err != nil {
+		return err
+	}
+
+	o.log.Info("Replace original DB with snapshot")
+	if _, err := o.RunInHostNamespace(command, args...); err != nil {
+		return err
+	}
+
+	o.log.Info("Unauthenticated etcd server for recert is up and running")
+
+	return nil
+}
+
 // RunUnauthenticatedEtcdServer Run unauthenticated etcd server for the recert tool.
 // This runs a small (fake) unauthenticated etcd server backed by the actual etcd database,
 // which is required before running the recert tool.
