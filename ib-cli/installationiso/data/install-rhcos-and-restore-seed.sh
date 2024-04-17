@@ -16,6 +16,8 @@ create_extra_partition=true
 authfile=${AUTH_FILE:-"/var/tmp/backup-secret.json"}
 pull_secret=${PULL_SECRET_FILE:-"/var/tmp/pull-secret.json"}
 
+podman run --privileged --rm --pid=host --authfile "${authfile}" -v /:/host --entrypoint /usr/local/bin/ib-cli "${lca_image}" disk-cleanup ${installation_disk}
+
 coreos-installer install ${installation_disk}
 
 if [[ "$create_extra_partition" == "true" ]]; then
